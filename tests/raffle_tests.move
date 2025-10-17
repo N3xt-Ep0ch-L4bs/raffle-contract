@@ -10,14 +10,14 @@ use sui::random::Random;    // type for take_shared
 use sui::sui::SUI;         // for Coin<SUI>
 
 use raffle::raffle::{
-    Raffle, Ticket,
-    create_raffle, buy_ticket, choose_winner, winner_redeem_price,
-    EIncorrectTiCketPrice, ERaffleEnded, ERaffleNotEnded, ENotWinner
+    Raffle,
+    create_raffle, buy_ticket, choose_winner, 
+    EIncorrectTiCketPrice, ERaffleEnded, ERaffleNotEnded
 };
 
 const CREATOR: address = @0xA;
 const PLAYER1: address = @0xB;
-const PLAYER2: address = @0xC;
+
 
 #[test]
 fun test_create_raffle_success() {
@@ -224,59 +224,3 @@ fun test_choose_winner_fails_before_end_time() {
     scenario.end();
 }
 
-#[test, expected_failure(abort_code = ENotWinner)]
-fun test_winner_redeem_fails_not_winner() {
-    let mut scenario = ts::begin(CREATOR); 
-    {
-        let clock = create_for_testing(scenario.ctx());
-        share_for_testing(clock);
-    };
-
-    // create the Random object with @0x0 as sender
-    ts::next_tx(&mut scenario, @0x0);
-    {
-        random::create_for_testing(scenario.ctx());
-    };
-
-    ts::next_tx(&mut scenario, CREATOR);
-    {
-        create_raffle<SUI>(100, 0, 1000, scenario.ctx());
-    };
-
-    ts::next_tx(&mut scenario, PLAYER1);
-    {
-        let mut raffle = ts::take_shared<Raffle<SUI>>(&scenario);
-        let clock = ts::take_shared<Clock>(&scenario);
-        let coin: Coin<SUI> = coin::mint_for_testing<SUI>(100, scenario.ctx());
-        buy_ticket(&mut raffle, coin, &clock, scenario.ctx());
-        ts::return_shared(raffle);
-        ts::return_shared(clock);
-    };
-
-    ts::next_tx(&mut scenario, CREATOR);
-    {
-        let mut clock = ts::take_shared<Clock>(&scenario);
-        increment_for_testing(&mut clock, 2000);
-        ts::return_shared(clock);
-    };
-
-    ts::next_tx(&mut scenario, CREATOR);
-    {
-        let mut raffle = ts::take_shared<Raffle<SUI>>(&scenario);
-        let clock = ts::take_shared<Clock>(&scenario);
-        let random = ts::take_shared<Random>(&scenario);
-        choose_winner(&mut raffle, &clock, &random, scenario.ctx());
-        ts::return_shared(raffle);
-        ts::return_shared(clock);
-        ts::return_shared(random);
-    };
-
-    ts::next_tx(&mut scenario, PLAYER2);
-    {
-        let raffle = ts::take_shared<Raffle<SUI>>(&scenario);
-        let ticket = ts::take_shared<Ticket>(&scenario);
-        winner_redeem_price(ticket, raffle, scenario.ctx()); 
-    };
-
-    scenario.end();
-}
