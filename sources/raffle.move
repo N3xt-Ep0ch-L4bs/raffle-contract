@@ -19,7 +19,7 @@ const ERaffleNotEmpty: u64 = 7;
 const EBalanceNotZero: u64 = 8;
 const EAdminCapRaffleMismatch: u64 = 9;
 
-public struct Raffle<phantom T> has key, store{
+public struct Raffle<phantom T> has key{
     id: UID,
     ticket_price: u64,
     start_time: u64,
@@ -67,7 +67,7 @@ public struct PrizeRedeemed has copy, drop{
 }
 
 #[allow(lint(self_transfer))]
-public fun create_raffle<T: store>(ticket_price: u64, start_time: u64, end_time: u64, ctx: &mut TxContext){
+public fun create_raffle<T>(ticket_price: u64, start_time: u64, end_time: u64, ctx: &mut TxContext){
     let raffle = Raffle<T> {
         id: object::new(ctx),
         ticket_price,
@@ -91,12 +91,12 @@ public fun create_raffle<T: store>(ticket_price: u64, start_time: u64, end_time:
         end_time
     });
 
-    transfer::public_share_object(raffle);
+    transfer::share_object(raffle);
     transfer::public_transfer(admin_cap, ctx.sender());
 }
 
 #[allow(lint(self_transfer))]
-public fun buy_ticket<T: store>(raffle: &mut Raffle<T>, price: Coin<T>, clock: &Clock, ctx: &mut TxContext){
+public fun buy_ticket<T>(raffle: &mut Raffle<T>, price: Coin<T>, clock: &Clock, ctx: &mut TxContext){
     assert!(coin::value(&price) == raffle.ticket_price, EIncorrectTiCketPrice);
     assert!(raffle.start_time <= clock::timestamp_ms(clock), ERaffleNotStarted);
     assert!(raffle.end_time > clock::timestamp_ms(clock), ERaffleEnded);
@@ -120,7 +120,7 @@ public fun buy_ticket<T: store>(raffle: &mut Raffle<T>, price: Coin<T>, clock: &
     transfer::public_transfer(ticket, ctx.sender());
 }
 
-entry fun choose_winner<T: store>(raffle: &mut Raffle<T>, clock: &Clock, r: &Random, ctx: &mut TxContext){
+entry fun choose_winner<T>(raffle: &mut Raffle<T>, clock: &Clock, r: &Random, ctx: &mut TxContext){
     assert!(clock::timestamp_ms(clock) >= raffle.end_time, ERaffleNotEnded);
     assert!(raffle.winner == option::none(), EWinnerAlreadyFound);
     assert!(raffle.players > 0, ENoPlayers);
@@ -136,7 +136,7 @@ entry fun choose_winner<T: store>(raffle: &mut Raffle<T>, clock: &Clock, r: &Ran
 }
 
 #[allow(lint(self_transfer))]
-public fun winner_redeem_price<T: store>(ticket: Ticket, raffle: Raffle<T>, ctx: &mut TxContext){
+public fun winner_redeem_price<T>(ticket: Ticket, raffle: Raffle<T>, ctx: &mut TxContext){
     assert!(raffle.winner.contains(&ticket.player_index), ENotWinner);
 
     let Ticket { id, raffle_id: _, player_index: _ } = ticket;
@@ -167,7 +167,7 @@ public fun winner_redeem_price<T: store>(ticket: Ticket, raffle: Raffle<T>, ctx:
     transfer::public_transfer(prize, ctx.sender());
 }
 
-public fun delete_raffle<T: store>(admin_cap: &AdminCap, raffle: Raffle<T>){
+public fun delete_raffle<T>(admin_cap: &AdminCap, raffle: Raffle<T>){
     assert!(admin_cap.raffle_id == object::id(&raffle), EAdminCapRaffleMismatch);
     assert!(raffle.players == 0, ERaffleNotEmpty);
     assert!(raffle.balance.value() == 0, EBalanceNotZero);
@@ -186,23 +186,23 @@ public fun delete_raffle<T: store>(admin_cap: &AdminCap, raffle: Raffle<T>){
 }
 
 // Getter Functions
-public fun ticket_price<T: store>(raffle: &mut Raffle<T>) :u64{
+public fun ticket_price<T>(raffle: &mut Raffle<T>) :u64{
     raffle.ticket_price
 }
 
-public fun start_time<T: store>(raffle: &mut Raffle<T>) :u64{
+public fun start_time<T>(raffle: &mut Raffle<T>) :u64{
     raffle.start_time
 }
 
-public fun end_time<T: store>(raffle: &mut Raffle<T>) :u64{
+public fun end_time<T>(raffle: &mut Raffle<T>) :u64{
     raffle.end_time
 }
 
-public fun creator<T: store>(raffle: &mut Raffle<T>) :address{
+public fun creator<T>(raffle: &mut Raffle<T>) :address{
     raffle.creator
 }
 
-public fun balance<T: store>(raffle: &mut Raffle<T>) :&Balance<T>{
+public fun balance<T>(raffle: &mut Raffle<T>) :&Balance<T>{
     &raffle.balance
 }
 
@@ -210,11 +210,11 @@ public fun balance_value<T: store>(raffle: &Raffle<T>): u64{
     raffle.balance.value()
 }
 
-public fun players<T: store>(raffle: &mut Raffle<T>) :u64{
+public fun players<T>(raffle: &mut Raffle<T>) :u64{
     raffle.players
 }
 
-public fun winner<T: store>(raffle: &mut Raffle<T>): &Option<u64>{
+public fun winner<T>(raffle: &mut Raffle<T>): &Option<u64>{
     &raffle.winner
 }
 
