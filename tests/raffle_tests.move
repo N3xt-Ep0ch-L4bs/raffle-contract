@@ -5,9 +5,9 @@ use sui::test_scenario as ts;
 use sui::test_utils::assert_eq;
 use sui::clock::{Clock, create_for_testing, share_for_testing, increment_for_testing};
 use sui::coin::{Self, Coin};
-use sui::random;            // we call random::create_for_testing(...)
-use sui::random::Random;    // type for take_shared
-use sui::sui::SUI;         // for Coin<SUI>
+use sui::random;           
+use sui::random::Random;    
+use sui::sui::SUI;         
 
 use raffle::raffle::{
     Raffle,
@@ -34,7 +34,7 @@ fun test_create_raffle_success() {
     };
 
     let effects = ts::next_tx(&mut scenario, CREATOR);
-    assert_eq(effects.num_user_events(), 1); // RaffleCreated event emitted
+    assert_eq(effects.num_user_events(), 1);
     scenario.end();
 }
 
@@ -61,7 +61,7 @@ fun test_buy_ticket_success() {
     };
 
     let effects = ts::next_tx(&mut scenario, PLAYER1);
-    assert_eq(effects.num_user_events(), 1); // TicketBought event
+    assert_eq(effects.num_user_events(), 1); 
     scenario.end();
 }
 
@@ -81,7 +81,7 @@ fun test_buy_ticket_fails_incorrect_price() {
     {
         let mut raffle = ts::take_shared<Raffle<SUI>>(&scenario);
         let clock = ts::take_shared<Clock>(&scenario);
-        let coin: Coin<SUI> = coin::mint_for_testing<SUI>(50, scenario.ctx()); // wrong amount
+        let coin: Coin<SUI> = coin::mint_for_testing<SUI>(50, scenario.ctx()); 
         buy_ticket(&mut raffle, coin, &clock, scenario.ctx());
         ts::return_shared(raffle);
         ts::return_shared(clock);
@@ -127,24 +127,20 @@ fun test_buy_ticket_fails_after_end_time() {
 fun test_choose_winner_success() {
     let mut scenario = ts::begin(CREATOR); 
     {
-        // create and share clock
         let clock = create_for_testing(scenario.ctx());
         share_for_testing(clock);
     };
 
-    // create the Random object with @0x0 as sender
     ts::next_tx(&mut scenario, @0x0);
     {
         random::create_for_testing(scenario.ctx());
     };
 
-    // create raffle in a transaction
     ts::next_tx(&mut scenario, CREATOR);
     {
         create_raffle<SUI>(100, 0, 1000, scenario.ctx());
     };
 
-    // buy a ticket in next tx (PLAYER1)
     ts::next_tx(&mut scenario, PLAYER1);
     {
         let mut raffle = ts::take_shared<Raffle<SUI>>(&scenario);
@@ -155,7 +151,6 @@ fun test_choose_winner_success() {
         ts::return_shared(clock);
     };
 
-    // advance time so raffle ended
     ts::next_tx(&mut scenario, CREATOR);
     {
         let mut clock = ts::take_shared<Clock>(&scenario);
@@ -163,7 +158,6 @@ fun test_choose_winner_success() {
         ts::return_shared(clock);
     };
 
-    // now take Random and choose winner
     ts::next_tx(&mut scenario, CREATOR);
     {
         let mut raffle = ts::take_shared<Raffle<SUI>>(&scenario);
@@ -188,7 +182,6 @@ fun test_choose_winner_fails_before_end_time() {
         share_for_testing(clock);
     };
 
-    // create the Random object with @0x0 as sender
     ts::next_tx(&mut scenario, @0x0);
     {
         random::create_for_testing(scenario.ctx());
@@ -209,7 +202,6 @@ fun test_choose_winner_fails_before_end_time() {
         ts::return_shared(clock);
     };
 
-    // Attempt to choose winner too early (same tx where choose called)
     ts::next_tx(&mut scenario, CREATOR);
     {
         let mut raffle = ts::take_shared<Raffle<SUI>>(&scenario);
