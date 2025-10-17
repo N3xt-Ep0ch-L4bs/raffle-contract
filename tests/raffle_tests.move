@@ -47,12 +47,12 @@ fun test_buy_ticket_success() {
 
     ts::next_tx(&mut scenario, CREATOR);
     {
-        create_raffle(100, 0, 2000, scenario.ctx());
+        create_raffle<SUI>(100, 0, 2000, scenario.ctx());
     };
 
     ts::next_tx(&mut scenario, PLAYER1);
     {
-        let mut raffle = ts::take_shared<Raffle>(&scenario);
+        let mut raffle = ts::take_shared<Raffle<SUI>>(&scenario);
         let clock = ts::take_shared<Clock>(&scenario);
         let coin: Coin<SUI> = coin::mint_for_testing<SUI>(100, scenario.ctx());
         buy_ticket(&mut raffle, coin, &clock, scenario.ctx());
@@ -74,12 +74,12 @@ fun test_buy_ticket_fails_incorrect_price() {
 
     ts::next_tx(&mut scenario, CREATOR);
     {
-        create_raffle(100, 0, 2000, scenario.ctx());
+        create_raffle<SUI>(100, 0, 2000, scenario.ctx());
     };
 
     ts::next_tx(&mut scenario, PLAYER1);
     {
-        let mut raffle = ts::take_shared<Raffle>(&scenario);
+        let mut raffle = ts::take_shared<Raffle<SUI>>(&scenario);
         let clock = ts::take_shared<Clock>(&scenario);
         let coin: Coin<SUI> = coin::mint_for_testing<SUI>(50, scenario.ctx()); // wrong amount
         buy_ticket(&mut raffle, coin, &clock, scenario.ctx());
@@ -99,7 +99,7 @@ fun test_buy_ticket_fails_after_end_time() {
 
     ts::next_tx(&mut scenario, CREATOR);
     {
-        create_raffle(100, 0, 1000, scenario.ctx());
+        create_raffle<SUI>(100, 0, 1000, scenario.ctx());
     };
 
     // advance time in a following tx
@@ -112,7 +112,7 @@ fun test_buy_ticket_fails_after_end_time() {
 
     ts::next_tx(&mut scenario, PLAYER1);
     {
-        let mut raffle = ts::take_shared<Raffle>(&scenario);
+        let mut raffle = ts::take_shared<Raffle<SUI>>(&scenario);
         let clock = ts::take_shared<Clock>(&scenario);
         let coin: Coin<SUI> = coin::mint_for_testing<SUI>(100, scenario.ctx());
         buy_ticket(&mut raffle, coin, &clock, scenario.ctx());
@@ -136,13 +136,13 @@ fun test_choose_winner_success() {
     // create raffle in a transaction
     ts::next_tx(&mut scenario, CREATOR);
     {
-        create_raffle(100, 0, 1000, scenario.ctx());
+        create_raffle<SUI>(100, 0, 1000, scenario.ctx());
     };
 
     // buy a ticket in next tx (PLAYER1)
     ts::next_tx(&mut scenario, PLAYER1);
     {
-        let mut raffle = ts::take_shared<Raffle>(&scenario);
+        let mut raffle = ts::take_shared<Raffle<SUI>>(&scenario);
         let clock = ts::take_shared<Clock>(&scenario);
         let coin: Coin<SUI> = coin::mint_for_testing<SUI>(100, scenario.ctx());
         buy_ticket(&mut raffle, coin, &clock, scenario.ctx());
@@ -161,7 +161,7 @@ fun test_choose_winner_success() {
     // now take Random and choose winner
     ts::next_tx(&mut scenario, CREATOR);
     {
-        let mut raffle = ts::take_shared<Raffle>(&scenario);
+        let mut raffle = ts::take_shared<Raffle<SUI>>(&scenario);
         let clock = ts::take_shared<Clock>(&scenario);
         let random = ts::take_shared<Random>(&scenario); // Random exists because we called random::create_for_testing earlier
         choose_winner(&mut raffle, &clock, &random, scenario.ctx());
@@ -185,12 +185,12 @@ fun test_choose_winner_fails_before_end_time() {
 
     ts::next_tx(&mut scenario, CREATOR);
     {
-        create_raffle(100, 0, 1000, scenario.ctx());
+        create_raffle<SUI>(100, 0, 1000, scenario.ctx());
     };
 
     ts::next_tx(&mut scenario, PLAYER1);
     {
-        let mut raffle = ts::take_shared<Raffle>(&scenario);
+        let mut raffle = ts::take_shared<Raffle<SUI>>(&scenario);
         let clock = ts::take_shared<Clock>(&scenario);
         let coin: Coin<SUI> = coin::mint_for_testing<SUI>(100, scenario.ctx());
         buy_ticket(&mut raffle, coin, &clock, scenario.ctx());
@@ -201,7 +201,7 @@ fun test_choose_winner_fails_before_end_time() {
     // Attempt to choose winner too early (same tx where choose called)
     ts::next_tx(&mut scenario, CREATOR);
     {
-        let mut raffle = ts::take_shared<Raffle>(&scenario);
+        let mut raffle = ts::take_shared<Raffle<SUI>>(&scenario);
         let clock = ts::take_shared<Clock>(&scenario);
         let random = ts::take_shared<Random>(&scenario);
         choose_winner(&mut raffle, &clock, &random, scenario.ctx()); // expected to abort ERaffleNotEnded
@@ -223,12 +223,12 @@ fun test_winner_redeem_fails_not_winner() {
 
     ts::next_tx(&mut scenario, CREATOR);
     {
-        create_raffle(100, 0, 1000, scenario.ctx());
+        create_raffle<SUI>(100, 0, 1000, scenario.ctx());
     };
 
     ts::next_tx(&mut scenario, PLAYER1);
     {
-        let mut raffle = ts::take_shared<Raffle>(&scenario);
+        let mut raffle = ts::take_shared<Raffle<SUI>>(&scenario);
         let clock = ts::take_shared<Clock>(&scenario);
         let coin: Coin<SUI> = coin::mint_for_testing<SUI>(100, scenario.ctx());
         buy_ticket(&mut raffle, coin, &clock, scenario.ctx());
@@ -245,7 +245,7 @@ fun test_winner_redeem_fails_not_winner() {
 
     ts::next_tx(&mut scenario, CREATOR);
     {
-        let mut raffle = ts::take_shared<Raffle>(&scenario);
+        let mut raffle = ts::take_shared<Raffle<SUI>>(&scenario);
         let clock = ts::take_shared<Clock>(&scenario);
         let random = ts::take_shared<Random>(&scenario);
         choose_winner(&mut raffle, &clock, &random, scenario.ctx());
@@ -256,7 +256,7 @@ fun test_winner_redeem_fails_not_winner() {
 
     ts::next_tx(&mut scenario, PLAYER2);
     {
-        let raffle = ts::take_shared<Raffle>(&scenario);
+        let raffle = ts::take_shared<Raffle<SUI>>(&scenario);
         let ticket = ts::take_shared<Ticket>(&scenario);
         winner_redeem_price(ticket, raffle, scenario.ctx()); // not the winner -> expected abort ENotWinner
     };
