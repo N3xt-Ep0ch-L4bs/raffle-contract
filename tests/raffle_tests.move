@@ -125,12 +125,17 @@ fun test_buy_ticket_fails_after_end_time() {
 
 #[test]
 fun test_choose_winner_success() {
-    let mut scenario = ts::begin(CREATOR); {
+    let mut scenario = ts::begin(CREATOR); 
+    {
         // create and share clock
         let clock = create_for_testing(scenario.ctx());
         share_for_testing(clock);
-        // create the Random object in the scenario for testing
-        random::create_for_testing(scenario.ctx()); // returns () but creates/shares Random in scenario
+    };
+
+    // create the Random object with @0x0 as sender
+    ts::next_tx(&mut scenario, @0x0);
+    {
+        random::create_for_testing(scenario.ctx());
     };
 
     // create raffle in a transaction
@@ -163,7 +168,7 @@ fun test_choose_winner_success() {
     {
         let mut raffle = ts::take_shared<Raffle<SUI>>(&scenario);
         let clock = ts::take_shared<Clock>(&scenario);
-        let random = ts::take_shared<Random>(&scenario); // Random exists because we called random::create_for_testing earlier
+        let random = ts::take_shared<Random>(&scenario);
         choose_winner(&mut raffle, &clock, &random, scenario.ctx());
         ts::return_shared(raffle);
         ts::return_shared(clock);
@@ -177,9 +182,15 @@ fun test_choose_winner_success() {
 
 #[test, expected_failure(abort_code = ERaffleNotEnded)]
 fun test_choose_winner_fails_before_end_time() {
-    let mut scenario = ts::begin(CREATOR); {
+    let mut scenario = ts::begin(CREATOR); 
+    {
         let clock = create_for_testing(scenario.ctx());
         share_for_testing(clock);
+    };
+
+    // create the Random object with @0x0 as sender
+    ts::next_tx(&mut scenario, @0x0);
+    {
         random::create_for_testing(scenario.ctx());
     };
 
@@ -215,9 +226,15 @@ fun test_choose_winner_fails_before_end_time() {
 
 #[test, expected_failure(abort_code = ENotWinner)]
 fun test_winner_redeem_fails_not_winner() {
-    let mut scenario = ts::begin(CREATOR); {
+    let mut scenario = ts::begin(CREATOR); 
+    {
         let clock = create_for_testing(scenario.ctx());
         share_for_testing(clock);
+    };
+
+    // create the Random object with @0x0 as sender
+    ts::next_tx(&mut scenario, @0x0);
+    {
         random::create_for_testing(scenario.ctx());
     };
 
@@ -258,7 +275,7 @@ fun test_winner_redeem_fails_not_winner() {
     {
         let raffle = ts::take_shared<Raffle<SUI>>(&scenario);
         let ticket = ts::take_shared<Ticket>(&scenario);
-        winner_redeem_price(ticket, raffle, scenario.ctx()); // not the winner -> expected abort ENotWinner
+        winner_redeem_price(ticket, raffle, scenario.ctx()); 
     };
 
     scenario.end();
